@@ -1,0 +1,36 @@
+name: Go
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/checkout@v2
+
+      - name: Cache Go Modules
+        id: cache-modules
+        uses: actions/checkout@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v ./...
