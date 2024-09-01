@@ -18,8 +18,6 @@ jobs:
 
       - name: Set up Go
         uses: actions/checkout@v2
-        with:
-          go-version: '^1.23.0'
 
       - name: Cache Go Modules
         id: cache-modules
