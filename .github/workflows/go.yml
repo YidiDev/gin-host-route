@@ -16,14 +16,14 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Cache Go Modules
         id: cache-modules
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: |
             ~/.cache/go-build
