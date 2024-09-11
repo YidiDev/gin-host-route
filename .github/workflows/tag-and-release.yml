@@ -45,26 +45,23 @@ jobs:
           fi
           echo "new_version=$new_version" >> $GITHUB_ENV
 
-      - name: Set Up Remote URL with PAT
-        run: |
-          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
-          git remote -v  # Print the current remote URL configuration
-
       - name: Create and Push Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          echo "Creating tag v$new_version"
           git tag "v$new_version"
           echo "Pushing tag v$new_version"
-          git push origin "v$new_version"
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git "v$new_version"
 
       - name: Update VERSION file (if version was incremented)
         if: env.use_tag == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          echo "Updating VERSION file to $new_version"
           echo $new_version > VERSION
           git add VERSION
           git commit -m "Bump version to $new_version"
-          git push origin main
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git main
 
   release:
     runs-on: ubuntu-latest
