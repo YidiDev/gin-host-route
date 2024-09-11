@@ -32,11 +32,12 @@ jobs:
       - name: Check if the current version is already tagged
         id: check_tag
         run: |
-          if git tag --list "v${{ env.VERSION }}"; then
-            echo "Tag v${{ env.VERSION }} already exists."
+          TAG_EXISTS=$(git tag --list "v${VERSION}")
+          if [ -n "$TAG_EXISTS" ]; then
+            echo "Tag v${VERSION} already exists."
             echo "TAG_EXISTS=true" >> $GITHUB_ENV
           else
-            echo "Tag v${{ env.VERSION }} does not exist."
+            echo "Tag v${VERSION} does not exist."
             echo "TAG_EXISTS=false" >> $GITHUB_ENV
           fi
 
