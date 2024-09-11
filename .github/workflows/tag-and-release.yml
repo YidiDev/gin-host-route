@@ -11,10 +11,6 @@ jobs:
 
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
-    outputs:
-      new_version: ${{ steps.set_new_version.outputs.new_version }}
-      prerelease: ${{ steps.set_prerelease.outputs.prerelease }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -54,8 +50,6 @@ jobs:
             echo "prerelease=false" >> $GITHUB_OUTPUT
             echo "false" > prerelease_flag
           fi
-        outputs:
-          prerelease: ${{ steps.set_prerelease.outputs.prerelease }}
 
       - name: Update VERSION file
         run: |
@@ -116,10 +110,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
-          tag_name: "v${{ needs.tag.outputs.new_version }}"
-          release_name: "Release v${{ needs.tag.outputs.new_version }}"
+          tag_name: "v${{ steps.set_new_version.outputs.new_version }}"
+          release_name: "Release v${{ steps.set_new_version.outputs.new_version }}"
           body: |
             Changes in this release:
             - TODO: Add release notes here
           draft: false
-          prerelease: ${{ needs.tag.outputs.prerelease }}
+          prerelease: ${{ steps.set_prerelease.outputs.prerelease }}
