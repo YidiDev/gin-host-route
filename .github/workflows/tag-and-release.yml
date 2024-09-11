@@ -69,6 +69,10 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN }}
 
+      - name: Get new version from previous job
+        run: |
+          echo "NEW_VERSION=${{ needs.tag.outputs.NEW_VERSION }}" >> $GITHUB_ENV
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -96,7 +100,6 @@ jobs:
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-          NEW_VERSION: ${{ env.NEW_VERSION }}
         with:
           tag_name: "v${{ env.NEW_VERSION }}"
           release_name: "Release v${{ env.NEW_VERSION }}"
