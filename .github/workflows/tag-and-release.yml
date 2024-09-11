@@ -35,7 +35,8 @@ jobs:
             echo "use_tag=true" >> $GITHUB_ENV
           else
             echo "use_tag=false" >> $GITHUB_ENV
-            echo "new_version=$VERSION" >> $GITHUB_ENV # Set new_version to VERSION
+            echo "new_version=$VERSION" >> $GITHUB_ENV
+          fi
 
       - name: Increment version if necessary
         id: increment_version
