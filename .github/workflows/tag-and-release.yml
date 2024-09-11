@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Set up Git
         run: |
@@ -45,9 +47,12 @@ jobs:
           fi
           echo "new_version=$new_version" >> $GITHUB_ENV
 
+      - name: Set Up Remote URL with PAT
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
+          git remote -v  # Print the current remote URL configuration
+
       - name: Create and Push Tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git tag "v$new_version"
           echo "Pushing tag v$new_version"
@@ -55,8 +60,6 @@ jobs:
 
       - name: Update VERSION file (if version was incremented)
         if: env.use_tag == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           echo $new_version > VERSION
           git add VERSION
@@ -70,6 +73,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
