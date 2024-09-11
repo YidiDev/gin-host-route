@@ -18,18 +18,34 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-      - name: Get the current version
+      - name: Get the current version from file
         id: vars
         run: |
           echo ::set-output name=version::$(cat VERSION)
 
-      - name: Increment version
+      - name: Check if the current version is already tagged
+        id: check_tag
+        run: |
+          VERSION=$(cat VERSION)
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION exists."
+            echo "::set-output name=use_tag::true"
+          else
+            echo "Tag v$VERSION does not exist."
+            echo "::set-output name=use_tag::false"
+          fi
+
+      - name: Increment version if necessary
         id: increment_version
         run: |
-          echo "Current version: ${{ steps.vars.outputs.version }}"
-          IFS='.' read -r major minor patch <<< "${{ steps.vars.outputs.version }}"
-          new_patch=$((patch + 1))
-          new_version="$major.$minor.$new_patch"
+          if [ "${{ steps.check_tag.outputs.use_tag }}" == "true" ]; then
+            new_version="${{ steps.vars.outputs.version }}"
+          else
+            echo "Current version: ${{ steps.vars.outputs.version }}"
+            IFS='.' read -r major minor patch <<< "${{ steps.vars.outputs.version }}"
+            new_patch=$((patch + 1))
+            new_version="$major.$minor.$new_patch"
+          fi
           echo "New version: $new_version"
           echo "::set-output name=new_version::$new_version"
 
@@ -39,7 +55,8 @@ jobs:
           git tag "v$new_version"
           git push origin "v$new_version"
 
-      - name: Update VERSION file
+      - name: Update VERSION file (if version was incremented)
+        if: steps.check_tag.outputs.use_tag == 'false'
         run: |
           new_version=${{ steps.increment_version.outputs.new_version }}
           echo $new_version > VERSION
