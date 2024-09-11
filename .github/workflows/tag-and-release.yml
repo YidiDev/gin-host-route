@@ -31,7 +31,7 @@ jobs:
       - name: Check if the current version is already tagged
         id: check_tag
         run: |
-          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+          if git show-ref --tags | egrep -q "refs/tags/v${VERSION}$"; then
             echo "use_tag=true" >> $GITHUB_ENV
           else
             echo "use_tag=false" >> $GITHUB_ENV
@@ -40,9 +40,10 @@ jobs:
 
       - name: Increment version if necessary
         id: increment_version
-        if: env.use_tag == 'true'  # Only increment if the tag already exists
+        if: env.use_tag == 'true'
         run: |
-          IFS='.' read -r major minor patch <<< "$VERSION"
+          VERSION=$(cat VERSION)
+          IFS='.' read -r major minor patch < <(echo $VERSION)
           new_patch=$((patch + 1))
           new_version="$major.$minor.$new_patch"
           echo "new_version=$new_version" >> $GITHUB_ENV
@@ -59,9 +60,10 @@ jobs:
           git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git "v$new_version"
 
       - name: Update VERSION file (if version was incremented)
-        if: env.use_tag == 'true'  # Only update VERSION file if the version was incremented
+        if: env.use_tag == 'true'
         run: |
-          echo $new_version > VERSION
+          VERSION=$new_version
+          echo $VERSION > VERSION
           git add VERSION
           git commit -m "Bump version to $new_version [skip ci]"
           git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git main
@@ -106,8 +108,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
-          tag_name: "v$new_version"
-          release_name: "Release v$new_version"
+          tag_name: "v${{ env.new_version }}"
+          release_name: "Release v${{ env.new_version }}"
           body: |
             Changes in this release:
             - TODO: Add release notes here
