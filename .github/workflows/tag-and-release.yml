@@ -40,10 +40,8 @@ jobs:
           new_patch=$((patch + 1))
           NEW_VERSION="$major.$minor.$new_patch"
           echo "Incrementing version to $NEW_VERSION"
-          echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
           echo "::set-output name=new_version::$NEW_VERSION"
-        outputs:
-          new_version: ${{ steps.set_new_version.outputs.new_version }}
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Determine if Prerelease
         id: set_prerelease
@@ -51,13 +49,11 @@ jobs:
           IFS='.' read -r major minor patch <<< "$NEW_VERSION"
           if [ "$major" -eq 0 ]; then
             echo "Setting prerelease to true for $NEW_VERSION"
-            echo "prerelease=true" >> $GITHUB_ENV
+            echo "::set-output name=prerelease::true"
           else
             echo "Setting prerelease to false for $NEW_VERSION"
-            echo "prerelease=false" >> $GITHUB_ENV
+            echo "::set-output name=prerelease::false"
           fi
-        outputs:
-          prerelease: ${{ steps.set_prerelease.outputs.prerelease }}
 
       - name: Update VERSION file
         run: |
@@ -66,6 +62,8 @@ jobs:
           git add VERSION
           git commit -m "Bump version to ${NEW_VERSION} [skip ci]"
           git push origin main
+        env:
+          NEW_VERSION: ${{ env.NEW_VERSION }}
 
       - name: Create and Push Tag
         run: |
@@ -73,6 +71,8 @@ jobs:
           git tag "v${NEW_VERSION}"
           echo "Pushing tag v${NEW_VERSION}"
           git push origin "v${NEW_VERSION}"
+        env:
+          NEW_VERSION: ${{ env.NEW_VERSION }}
 
   release:
     runs-on: ubuntu-latest
