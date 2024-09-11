@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**[skip ci]'
 
 jobs:
   tag:
@@ -63,7 +65,7 @@ jobs:
         run: |
           echo $new_version > VERSION
           git add VERSION
-          git commit -m "Bump version to $new_version"
+          git commit -m "Bump version to $new_version [skip ci]"
           git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git main
 
   release:
