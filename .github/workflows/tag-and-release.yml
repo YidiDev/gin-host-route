@@ -32,12 +32,13 @@ jobs:
       - name: Check if the current version is already tagged
         id: check_tag
         run: |
-          TAG_EXISTS=$(git tag --list "v${VERSION}")
+          TAG_EXISTS=$(git tag --list "v${{ env.VERSION }}")
+          echo "Checking tag existence: $TAG_EXISTS"
           if [ -n "$TAG_EXISTS" ]; then
-            echo "Tag v${VERSION} already exists."
+            echo "Tag v${{ env.VERSION }} already exists."
             echo "TAG_EXISTS=true" >> $GITHUB_ENV
           else
-            echo "Tag v${VERSION} does not exist."
+            echo "Tag v${{ env.VERSION }} does not exist."
             echo "TAG_EXISTS=false" >> $GITHUB_ENV
           fi
 
@@ -63,17 +64,17 @@ jobs:
       - name: Update VERSION file if the version was incremented
         id: update_version_file
         run: |
-          if [ "${{ env.VERSION }}" != "${{ env.NEW_VERSION }}" ]; then
+          VERSION=$(echo "${{ env.VERSION }}")
+          NEW_VERSION=$(echo "${{ env.NEW_VERSION }}")
+          if [ "$VERSION" != "$NEW_VERSION" ]; then
             echo "Updating VERSION file to $NEW_VERSION"
-            echo "${NEW_VERSION}" > VERSION
+            echo "$NEW_VERSION" > VERSION
             git add VERSION
             git commit -m "Bump version to $NEW_VERSION [skip ci]"
             git push origin main
           else
             echo "No changes to VERSION file needed."
           fi
-        env:
-          VERSION: ${{ env.VERSION }}
 
       - name: Create and Push Tag
         run: |
@@ -81,8 +82,6 @@ jobs:
           git tag "v${{ env.NEW_VERSION }}"
           echo "Pushing tag v${{ env.NEW_VERSION }}"
           git push origin "v${{ env.NEW_VERSION }}"
-        env:
-          NEW_VERSION: ${{ env.NEW_VERSION }}
 
   release:
     runs-on: ubuntu-latest
