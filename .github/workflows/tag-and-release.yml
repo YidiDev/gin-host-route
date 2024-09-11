@@ -11,6 +11,9 @@ jobs:
 
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
+    outputs:
+      new_version: ${{ steps.set_new_version.outputs.new_version }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,12 +33,13 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Increment the version
-        id: increment_version
+        id: set_new_version
         run: |
           IFS='.' read -r major minor patch <<< "$VERSION"
           new_patch=$((patch + 1))
           NEW_VERSION="$major.$minor.$new_patch"
           echo "Incrementing version to $NEW_VERSION"
+          echo "::set-output name=new_version::$NEW_VERSION"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Update VERSION file
@@ -69,10 +73,6 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN }}
 
-      - name: Get new version from previous job
-        run: |
-          echo "NEW_VERSION=${{ needs.tag.outputs.NEW_VERSION }}" >> $GITHUB_ENV
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -101,8 +101,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
-          tag_name: "v${{ env.NEW_VERSION }}"
-          release_name: "Release v${{ env.NEW_VERSION }}"
+          tag_name: "v${{ needs.tag.outputs.new_version }}"
+          release_name: "Release v${{ needs.tag.outputs.new_version }}"
           body: |
             Changes in this release:
             - TODO: Add release notes here
