@@ -35,18 +35,15 @@ jobs:
             echo "use_tag=true" >> $GITHUB_ENV
           else
             echo "use_tag=false" >> $GITHUB_ENV
-          fi
+            echo "new_version=$VERSION" >> $GITHUB_ENV # Set new_version to VERSION
 
       - name: Increment version if necessary
         id: increment_version
+        if: env.use_tag == 'true'  # Only increment if the tag already exists
         run: |
-          if [ "$use_tag" == "true" ]; then
-            new_version="$VERSION"
-          else
-            IFS='.' read -r major minor patch <<< "$VERSION"
-            new_patch=$((patch + 1))
-            new_version="$major.$minor.$new_patch"
-          fi
+          IFS='.' read -r major minor patch <<< "$VERSION"
+          new_patch=$((patch + 1))
+          new_version="$major.$minor.$new_patch"
           echo "new_version=$new_version" >> $GITHUB_ENV
 
       - name: Set Up Remote URL with PAT
@@ -61,7 +58,7 @@ jobs:
           git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git "v$new_version"
 
       - name: Update VERSION file (if version was incremented)
-        if: env.use_tag == 'false'
+        if: env.use_tag == 'true'  # Only update VERSION file if the version was incremented
         run: |
           echo $new_version > VERSION
           git add VERSION
