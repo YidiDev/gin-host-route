@@ -31,7 +31,8 @@ jobs:
       - name: Check if the current version is already tagged
         id: check_tag
         run: |
-          if git show-ref --tags | egrep -q "refs/tags/v${VERSION}$"; then
+          TAG_EXISTS=$(git tag -l "v$VERSION")
+          if [ "$TAG_EXISTS" ]; then
             echo "use_tag=true" >> $GITHUB_ENV
           else
             echo "use_tag=false" >> $GITHUB_ENV
@@ -42,8 +43,7 @@ jobs:
         id: increment_version
         if: env.use_tag == 'true'
         run: |
-          VERSION=$(cat VERSION)
-          IFS='.' read -r major minor patch < <(echo $VERSION)
+          IFS='.' read -r major minor patch <<< "$VERSION"
           new_patch=$((patch + 1))
           new_version="$major.$minor.$new_patch"
           echo "new_version=$new_version" >> $GITHUB_ENV
@@ -62,8 +62,7 @@ jobs:
       - name: Update VERSION file (if version was incremented)
         if: env.use_tag == 'true'
         run: |
-          VERSION=$new_version
-          echo $VERSION > VERSION
+          echo $new_version > VERSION
           git add VERSION
           git commit -m "Bump version to $new_version [skip ci]"
           git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git main
