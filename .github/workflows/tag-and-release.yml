@@ -110,11 +110,11 @@ jobs:
       - name: Run tests
         run: go test -v ./...
 
-      - name: Use Release Drafter
-        id: draft_release
+      - name: Generate Release Notes
+        id: generate_release_notes
         uses: release-drafter/release-drafter@v6
         with:
-          version: ${{ needs.tag.outputs.new_version }}
+          tag: v${{ needs.tag.outputs.new_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
@@ -126,6 +126,6 @@ jobs:
         with:
           tag_name: "v${{ needs.tag.outputs.new_version }}"
           release_name: "Release v${{ needs.tag.outputs.new_version }}"
-          body: ${{ steps.draft_release.outputs.body }}
+          body: ${{ steps.generate_release_notes.outputs.body }}
           draft: false
           prerelease: ${{ needs.tag.outputs.prerelease }}
