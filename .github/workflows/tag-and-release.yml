@@ -40,7 +40,7 @@ jobs:
           new_patch=$((patch + 1))
           NEW_VERSION="$major.$minor.$new_patch"
           echo "Incrementing version to $NEW_VERSION"
-          echo "::set-output name=new_version::$NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Determine if Prerelease
@@ -48,12 +48,14 @@ jobs:
         run: |
           IFS='.' read -r major minor patch <<< "$NEW_VERSION"
           if [ "$major" -eq 0 ]; then
-            echo "Setting prerelease to true for $NEW_VERSION"
-            echo "::set-output name=prerelease::true"
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+            echo "true" > prerelease_flag
           else
-            echo "Setting prerelease to false for $NEW_VERSION"
-            echo "::set-output name=prerelease::false"
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+            echo "false" > prerelease_flag
           fi
+        outputs:
+          prerelease: ${{ steps.set_prerelease.outputs.prerelease }}
 
       - name: Update VERSION file
         run: |
