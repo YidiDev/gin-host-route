@@ -110,15 +110,7 @@ jobs:
       - name: Run tests
         run: go test -v ./...
 
-      - name: Generate Release Notes
-        id: generate_release_notes
-        uses: release-drafter/release-drafter@v6
-        with:
-          tag: v${{ needs.tag.outputs.new_version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-
-      - name: Create GitHub Release
+      - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
@@ -126,6 +118,8 @@ jobs:
         with:
           tag_name: "v${{ needs.tag.outputs.new_version }}"
           release_name: "Release v${{ needs.tag.outputs.new_version }}"
-          body: ${{ steps.generate_release_notes.outputs.body }}
+          body: |
+            Changes in this release:
+            - TODO: Add release notes here
           draft: false
           prerelease: ${{ needs.tag.outputs.prerelease }}
