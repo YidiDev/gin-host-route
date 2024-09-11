@@ -5,10 +5,14 @@ on:
     branches:
       - dev
       - main
+    paths-ignore:
+      - '**[skip ci]'
   pull_request:
     branches:
       - dev
       - main
+    paths-ignore:
+      - '**[skip ci]'
 
 jobs:
   test:
