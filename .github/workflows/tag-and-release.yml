@@ -22,50 +22,66 @@ jobs:
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
 
-      - name: Get the current version from file
-        id: vars
+      - name: Get the current version from the file
+        id: get_version
         run: |
           VERSION=$(cat VERSION)
+          echo "Current version: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Check if the current version is already tagged
         id: check_tag
         run: |
-          TAG_EXISTS=$(git tag -l "v$VERSION")
-          if [ "$TAG_EXISTS" ]; then
-            echo "use_tag=true" >> $GITHUB_ENV
+          if git rev-parse -q --verify "refs/tags/v${{ env.VERSION }}"; then
+            echo "Tag v${{ env.VERSION }} already exists."
+            echo "TAG_EXISTS=true" >> $GITHUB_ENV
           else
-            echo "use_tag=false" >> $GITHUB_ENV
-            echo "new_version=$VERSION" >> $GITHUB_ENV
+            echo "Tag v${{ env.VERSION }} does not exist."
+            echo "TAG_EXISTS=false" >> $GITHUB_ENV
           fi
 
-      - name: Increment version if necessary
-        id: increment_version
-        if: env.use_tag == 'true'
+      - name: Set the new version
+        id: set_new_version
         run: |
-          IFS='.' read -r major minor patch <<< "$VERSION"
-          new_patch=$((patch + 1))
-          new_version="$major.$minor.$new_patch"
-          echo "new_version=$new_version" >> $GITHUB_ENV
+          if [ "${{ env.TAG_EXISTS }}" = "true" ]; then
+            IFS='.' read -r major minor patch <<< "${{ env.VERSION }}"
+            new_patch=$((patch + 1))
+            NEW_VERSION="$major.$minor.$new_patch"
+            echo "Tag exists, incrementing version to $NEW_VERSION"
+          else
+            NEW_VERSION=${{ env.VERSION }}
+            echo "Tag does not exist, using current version $NEW_VERSION"
+          fi
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Set Up Remote URL with PAT
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
+          git remote set-url origin "https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git"
           git remote -v  # Print the current remote URL configuration
+
+      - name: Update VERSION file if the version was incremented
+        id: update_version_file
+        run: |
+          if [ "${{ env.VERSION }}" != "${{ env.NEW_VERSION }}" ]; then
+            echo "Updating VERSION file to $NEW_VERSION"
+            echo "${NEW_VERSION}" > VERSION
+            git add VERSION
+            git commit -m "Bump version to $NEW_VERSION [skip ci]"
+            git push origin main
+          else
+            echo "No changes to VERSION file needed."
+          fi
+        env:
+          VERSION: ${{ env.VERSION }}
 
       - name: Create and Push Tag
         run: |
-          git tag "v$new_version"
-          echo "Pushing tag v$new_version"
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git "v$new_version"
-
-      - name: Update VERSION file (if version was incremented)
-        if: env.use_tag == 'true'
-        run: |
-          echo $new_version > VERSION
-          git add VERSION
-          git commit -m "Bump version to $new_version [skip ci]"
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git main
+          echo "Creating tag v${{ env.NEW_VERSION }}"
+          git tag "v${{ env.NEW_VERSION }}"
+          echo "Pushing tag v${{ env.NEW_VERSION }}"
+          git push origin "v${{ env.NEW_VERSION }}"
+        env:
+          NEW_VERSION: ${{ env.NEW_VERSION }}
 
   release:
     runs-on: ubuntu-latest
@@ -106,9 +122,10 @@ jobs:
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          NEW_VERSION: ${{ env.NEW_VERSION }}
         with:
-          tag_name: "v${{ env.new_version }}"
-          release_name: "Release v${{ env.new_version }}"
+          tag_name: "v${{ env.NEW_VERSION }}"
+          release_name: "Release v${{ env.NEW_VERSION }}"
           body: |
             Changes in this release:
             - TODO: Add release notes here
