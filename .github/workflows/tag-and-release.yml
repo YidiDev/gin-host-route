@@ -21,52 +21,46 @@ jobs:
       - name: Get the current version from file
         id: vars
         run: |
-          echo ::set-output name=version::$(cat VERSION)
+          VERSION=$(cat VERSION)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Check if the current version is already tagged
         id: check_tag
         run: |
-          VERSION=$(cat VERSION)
           if git rev-parse "v$VERSION" >/dev/null 2>&1; then
-            echo "Tag v$VERSION exists."
-            echo "::set-output name=use_tag::true"
+            echo "use_tag=true" >> $GITHUB_ENV
           else
-            echo "Tag v$VERSION does not exist."
-            echo "::set-output name=use_tag::false"
+            echo "use_tag=false" >> $GITHUB_ENV
           fi
 
       - name: Increment version if necessary
         id: increment_version
         run: |
-          if [ "${{ steps.check_tag.outputs.use_tag }}" == "true" ]; then
-            new_version="${{ steps.vars.outputs.version }}"
+          if [ "$use_tag" == "true" ]; then
+            new_version="$VERSION"
           else
-            echo "Current version: ${{ steps.vars.outputs.version }}"
-            IFS='.' read -r major minor patch <<< "${{ steps.vars.outputs.version }}"
+            IFS='.' read -r major minor patch <<< "$VERSION"
             new_patch=$((patch + 1))
             new_version="$major.$minor.$new_patch"
           fi
-          echo "New version: $new_version"
-          echo "::set-output name=new_version::$new_version"
+          echo "new_version=$new_version" >> $GITHUB_ENV
 
-      - name: Add PAT for Authentication
+      - name: Set Up Remote URL with PAT
         run: |
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
+          git remote -v  # Print the current remote URL configuration
 
       - name: Create and Push Tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          new_version=${{ steps.increment_version.outputs.new_version }}
+          echo "Creating tag v$new_version"
           git tag "v$new_version"
+          echo "Pushing tag v$new_version"
           git push origin "v$new_version"
 
       - name: Update VERSION file (if version was incremented)
-        if: steps.check_tag.outputs.use_tag == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        if: env.use_tag == 'false'
         run: |
-          new_version=${{ steps.increment_version.outputs.new_version }}
+          echo "Updating VERSION file to $new_version"
           echo $new_version > VERSION
           git add VERSION
           git commit -m "Bump version to $new_version"
@@ -108,8 +102,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         with:
-          tag_name: "v${{ needs.tag.outputs.new_version }}"
-          release_name: "Release v${{ needs.tag.outputs.new_version }}"
+          tag_name: "v$new_version"
+          release_name: "Release v$new_version"
           body: |
             Changes in this release:
             - TODO: Add release notes here
