@@ -29,59 +29,33 @@ jobs:
           echo "Current version: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Check if the current version is already tagged
-        id: check_tag
+      - name: Increment the version
+        id: increment_version
         run: |
-          TAG_EXISTS=$(git tag --list "v${{ env.VERSION }}")
-          echo "Checking tag existence: $TAG_EXISTS"
-          if [ -n "$TAG_EXISTS" ]; then
-            echo "Tag v${{ env.VERSION }} already exists."
-            echo "TAG_EXISTS=true" >> $GITHUB_ENV
-          else
-            echo "Tag v${{ env.VERSION }} does not exist."
-            echo "TAG_EXISTS=false" >> $GITHUB_ENV
-          fi
-
-      - name: Set the new version
-        id: set_new_version
-        run: |
-          if [ "${{ env.TAG_EXISTS }}" = "true" ]; then
-            IFS='.' read -r major minor patch <<< "${{ env.VERSION }}"
-            new_patch=$((patch + 1))
-            NEW_VERSION="$major.$minor.$new_patch"
-            echo "Tag exists, incrementing version to $NEW_VERSION"
-          else
-            NEW_VERSION=${{ env.VERSION }}
-            echo "Tag does not exist, using current version $NEW_VERSION"
-          fi
+          IFS='.' read -r major minor patch <<< "$VERSION"
+          new_patch=$((patch + 1))
+          NEW_VERSION="$major.$minor.$new_patch"
+          echo "Incrementing version to $NEW_VERSION"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
-      - name: Set Up Remote URL with PAT
+      - name: Update VERSION file
         run: |
-          git remote set-url origin "https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git"
-          git remote -v  # Print the current remote URL configuration
-
-      - name: Update VERSION file if the version was incremented
-        id: update_version_file
-        run: |
-          VERSION=$(echo "${{ env.VERSION }}")
-          NEW_VERSION=$(echo "${{ env.NEW_VERSION }}")
-          if [ "$VERSION" != "$NEW_VERSION" ]; then
-            echo "Updating VERSION file to $NEW_VERSION"
-            echo "$NEW_VERSION" > VERSION
-            git add VERSION
-            git commit -m "Bump version to $NEW_VERSION [skip ci]"
-            git push origin main
-          else
-            echo "No changes to VERSION file needed."
-          fi
+          echo "Updating VERSION file to ${NEW_VERSION}"
+          echo "${NEW_VERSION}" > VERSION
+          git add VERSION
+          git commit -m "Bump version to ${NEW_VERSION} [skip ci]"
+          git push origin main
+        env:
+          NEW_VERSION: ${{ env.NEW_VERSION }}
 
       - name: Create and Push Tag
         run: |
-          echo "Creating tag v${{ env.NEW_VERSION }}"
-          git tag "v${{ env.NEW_VERSION }}"
-          echo "Pushing tag v${{ env.NEW_VERSION }}"
-          git push origin "v${{ env.NEW_VERSION }}"
+          echo "Creating tag v${NEW_VERSION}"
+          git tag "v${NEW_VERSION}"
+          echo "Pushing tag v${NEW_VERSION}"
+          git push origin "v${NEW_VERSION}"
+        env:
+          NEW_VERSION: ${{ env.NEW_VERSION }}
 
   release:
     runs-on: ubuntu-latest
