@@ -31,6 +31,10 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
+func noRouteHandler(c *gin.Context) {
+	c.String(http.StatusNotFound, "No known route")
+}
+
 func main() {
 	r := gin.Default()
 
@@ -41,7 +45,7 @@ func main() {
 
 	genericHosts := []string{"host3.com", "host4.com"}
 
-	hostroute.SetupHostBasedRoutes(r, hostConfigs, genericHosts, true)
+	hostroute.SetupHostBasedRoutes(r, hostConfigs, genericHosts, func(e *gin.Engine) { e.NoRoute(noRouteHandler) }, true)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.String(http.StatusNotFound, "No known route")
