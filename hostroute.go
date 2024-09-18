@@ -38,13 +38,14 @@ func createHostBasedRoutingMiddleware(hostConfigMap map[string]*HostConfig, gene
 	}
 }
 
-func SetupHostBasedRoutes(r *gin.Engine, hostConfigs []HostConfig, genericHosts []string, secureAgainstUnknownHost bool) {
+func SetupHostBasedRoutes(r *gin.Engine, hostConfigs []HostConfig, genericHosts []string, noRouteFactory func(*gin.Engine), secureAgainstUnknownHost bool) {
 	hostConfigMap := make(map[string]*HostConfig)
 	genericHostsMap := stringSliceToMap(genericHosts)
 
 	for i := range hostConfigs {
 		engine := gin.New()
 		engine.Use(gin.Recovery())
+		noRouteFactory(engine)
 		hostConfigs[i].engine = engine
 		hostConfigs[i].RouterFactory(&engine.RouterGroup)
 

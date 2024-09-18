@@ -3,6 +3,7 @@ package hostroute
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -43,7 +44,7 @@ func TestHostBasedRouting(t *testing.T) {
 
 	genericHosts := []string{"host3.com", "host4.com"}
 
-	SetupHostBasedRoutes(r, hostConfigs, genericHosts, true)
+	SetupHostBasedRoutes(r, hostConfigs, genericHosts, func(engine *gin.Engine) { engine.NoRoute(noRouteHandler) }, true)
 
 	server := httptest.NewServer(r)
 	defer server.Close()
@@ -90,11 +91,9 @@ func TestHostBasedRouting(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			body := make([]byte, resp.ContentLength)
-			_, err = resp.Body.Read(body)
-			if err != nil {
-				return
-			}
+			var body []byte
+			body, err = io.ReadAll(resp.Body)
+			assert.NoError(t, err)
 
 			assert.Equal(t, tt.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.expected, string(body))
@@ -115,7 +114,7 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 
 	genericHosts := []string{"host3.com", "host4.com"}
 
-	SetupHostBasedRoutes(r, hostConfigs, genericHosts, false)
+	SetupHostBasedRoutes(r, hostConfigs, genericHosts, func(engine *gin.Engine) { engine.NoRoute(noRouteHandler) }, false)
 
 	server := httptest.NewServer(r)
 	defer server.Close()
@@ -164,11 +163,9 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			body := make([]byte, resp.ContentLength)
-			_, err = resp.Body.Read(body)
-			if err != nil {
-				return
-			}
+			var body []byte
+			body, err = io.ReadAll(resp.Body)
+			assert.NoError(t, err)
 
 			assert.Equal(t, tt.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.expected, string(body))
