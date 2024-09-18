@@ -1,6 +1,7 @@
 package hostroute
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -80,24 +81,20 @@ func TestHostBasedRouting(t *testing.T) {
 	client := &http.Client{}
 
 	for _, tt := range tests {
-		func() {
+		t.Run(fmt.Sprintf("Host: %s, Path: %s", tt.host, tt.path), func(t *testing.T) {
 			req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
 			req.Host = tt.host
 			resp, err := client.Do(req)
-			defer func() {
-				err = resp.Body.Close()
-				assert.NoError(t, err)
-			}()
 
 			assert.NoError(t, err)
+			defer resp.Body.Close()
 
-			var body []byte
-			body, err = io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			assert.NoError(t, err)
 
 			assert.Equal(t, tt.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.expected, string(body))
-		}()
+		})
 	}
 }
 
@@ -152,24 +149,19 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 	client := &http.Client{}
 
 	for _, tt := range tests {
-		func() {
+		t.Run(fmt.Sprintf("Host: %s, Path: %s", tt.host, tt.path), func(t *testing.T) {
 			req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
 			req.Host = tt.host
 			resp, err := client.Do(req)
-			defer func() {
-				err = resp.Body.Close()
-				assert.NoError(t, err)
-			}()
 
 			assert.NoError(t, err)
+			defer resp.Body.Close()
 
-			var body []byte
-			body, err = io.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			assert.NoError(t, err)
 
 			assert.Equal(t, tt.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.expected, string(body))
-		}()
-
+		})
 	}
 }
