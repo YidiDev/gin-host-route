@@ -79,24 +79,26 @@ func TestHostBasedRouting(t *testing.T) {
 	client := &http.Client{}
 
 	for _, tt := range tests {
-		req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
-		req.Host = tt.host
-		resp, err := client.Do(req)
+		func() {
+			req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
+			req.Host = tt.host
+			resp, err := client.Do(req)
+			defer func() {
+				err = resp.Body.Close()
+				assert.NoError(t, err)
+			}()
 
-		assert.NoError(t, err)
+			assert.NoError(t, err)
 
-		body := make([]byte, resp.ContentLength)
-		_, err = resp.Body.Read(body)
-		if err != nil {
-			return
-		}
+			body := make([]byte, resp.ContentLength)
+			_, err = resp.Body.Read(body)
+			if err != nil {
+				return
+			}
 
-		assert.Equal(t, tt.statusCode, resp.StatusCode)
-		assert.Equal(t, tt.expected, string(body))
-		err = resp.Body.Close()
-		if err != nil {
-			return
-		}
+			assert.Equal(t, tt.statusCode, resp.StatusCode)
+			assert.Equal(t, tt.expected, string(body))
+		}()
 	}
 }
 
@@ -151,24 +153,26 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 	client := &http.Client{}
 
 	for _, tt := range tests {
-		req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
-		req.Host = tt.host
-		resp, err := client.Do(req)
+		func() {
+			req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
+			req.Host = tt.host
+			resp, err := client.Do(req)
+			defer func() {
+				err = resp.Body.Close()
+				assert.NoError(t, err)
+			}()
 
-		assert.NoError(t, err)
+			assert.NoError(t, err)
 
-		body := make([]byte, resp.ContentLength)
-		_, err = resp.Body.Read(body)
-		if err != nil {
-			return
-		}
+			body := make([]byte, resp.ContentLength)
+			_, err = resp.Body.Read(body)
+			if err != nil {
+				return
+			}
 
-		assert.Equal(t, tt.statusCode, resp.StatusCode)
-		assert.Equal(t, tt.expected, string(body))
+			assert.Equal(t, tt.statusCode, resp.StatusCode)
+			assert.Equal(t, tt.expected, string(body))
+		}()
 
-		err = resp.Body.Close()
-		if err != nil {
-			return
-		}
 	}
 }
