@@ -48,8 +48,10 @@ func SetupHostBasedRoutes(r *gin.Engine, hostConfigs []HostConfig, genericHosts 
 		hostConfigs[i].engine = engine
 		hostConfigs[i].RouterFactory(&engine.RouterGroup)
 
-		group := r.Group(fmt.Sprintf("/%s", hostConfigs[i].Prefix))
-		hostConfigs[i].RouterFactory(group)
+		if hostConfigs[i].Prefix != "" {
+			group := r.Group(fmt.Sprintf("/%s", hostConfigs[i].Prefix))
+			hostConfigs[i].RouterFactory(group)
+		}
 
 		hostConfigMap[hostConfigs[i].Host] = &hostConfigs[i]
 	}
