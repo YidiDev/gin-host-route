@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -86,11 +87,16 @@ func TestHostBasedRouting(t *testing.T) {
 			req.Host = tt.host
 			resp, err := client.Do(req)
 
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			defer resp.Body.Close()
+			defer func() {
+				err = resp.Body.Close()
+				require.NoError(t, err)
+			}()
 
-			body, err := io.ReadAll(resp.Body)
-			assert.NoError(t, err)
+			var body []byte
+			body, err = io.ReadAll(resp.Body)
+			require.NoError(t, err)
 
 			assert.Equal(t, tt.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.expected, string(body))
@@ -154,11 +160,16 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 			req.Host = tt.host
 			resp, err := client.Do(req)
 
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			defer resp.Body.Close()
+			defer func() {
+				err = resp.Body.Close()
+				require.NoError(t, err)
+			}()
 
-			body, err := io.ReadAll(resp.Body)
-			assert.NoError(t, err)
+			var body []byte
+			body, err = io.ReadAll(resp.Body)
+			require.NoError(t, err)
 
 			assert.Equal(t, tt.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.expected, string(body))
