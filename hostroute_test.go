@@ -11,22 +11,27 @@ import (
 	"testing"
 )
 
-func defineHost1Routes(rg *gin.RouterGroup) {
-	rg.GET("/", func(c *gin.Context) {
+func defineHost1Routes(g *gin.RouterGroup) {
+	g.GET("", func(c *gin.Context) {
 		c.String(http.StatusOK, "Hello from host1")
 	})
-	rg.GET("/hi", func(c *gin.Context) {
+	g.GET("/hi", func(c *gin.Context) {
 		c.String(http.StatusOK, "Hi from host1")
 	})
 }
 
-func defineHost2Routes(rg *gin.RouterGroup) {
-	rg.GET("/", func(c *gin.Context) {
+func defineHost2Routes(g *gin.RouterGroup) {
+	g.GET("", func(c *gin.Context) {
 		c.String(http.StatusOK, "Hello from host2")
 	})
-	rg.GET("/hi", func(c *gin.Context) {
+	g.GET("/hi", func(c *gin.Context) {
 		c.String(http.StatusOK, "Hi from host2")
 	})
+}
+
+func noRouteSpecifier(_ string, r *gin.Engine) error {
+	r.NoRoute(noRouteHandler)
+	return nil
 }
 
 func noRouteHandler(c *gin.Context) {
@@ -46,7 +51,8 @@ func TestHostBasedRouting(t *testing.T) {
 
 	genericHosts := []string{"host3.com", "host4.com"}
 
-	SetupHostBasedRoutes(r, hostConfigs, genericHosts, func(engine *gin.Engine) { engine.NoRoute(noRouteHandler) }, true)
+	err := SetupHostBasedRoutes(r, hostConfigs, genericHosts, true, noRouteSpecifier)
+	require.NoError(t, err)
 
 	server := httptest.NewServer(r)
 	defer server.Close()
@@ -85,7 +91,9 @@ func TestHostBasedRouting(t *testing.T) {
 		t.Run(fmt.Sprintf("Host: %s, Path: %s", tt.host, tt.path), func(t *testing.T) {
 			req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
 			req.Host = tt.host
-			resp, err := client.Do(req)
+
+			var resp *http.Response
+			resp, err = client.Do(req)
 
 			require.NoError(t, err)
 			defer func() {
@@ -103,7 +111,7 @@ func TestHostBasedRouting(t *testing.T) {
 	}
 }
 
-func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
+func TestHostBasedRoutingWithoutSecure(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	r := gin.Default()
@@ -116,7 +124,8 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 
 	genericHosts := []string{"host3.com", "host4.com"}
 
-	SetupHostBasedRoutes(r, hostConfigs, genericHosts, func(engine *gin.Engine) { engine.NoRoute(noRouteHandler) }, false)
+	err := SetupHostBasedRoutes(r, hostConfigs, genericHosts, false, noRouteSpecifier)
+	require.NoError(t, err)
 
 	server := httptest.NewServer(r)
 	defer server.Close()
@@ -130,12 +139,10 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 		{"host1.com", "/hi", "Hi from host1", http.StatusOK},
 		{"host1.com", "/unknown", "No known route", http.StatusNotFound},
 
-		// Host 2 specific routes
 		{"host2.com", "/", "Hello from host2", http.StatusOK},
 		{"host2.com", "/hi", "Hi from host2", http.StatusOK},
 		{"host2.com", "/unknown", "No known route", http.StatusNotFound},
 
-		// Generic Host Routes
 		{"host3.com", "/1", "Hello from host1", http.StatusOK},
 		{"host3.com", "/1/hi", "Hi from host1", http.StatusOK},
 		{"host3.com", "/2", "Hello from host2", http.StatusOK},
@@ -157,7 +164,9 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 		t.Run(fmt.Sprintf("Host: %s, Path: %s", tt.host, tt.path), func(t *testing.T) {
 			req, _ := http.NewRequest("GET", server.URL+tt.path, nil)
 			req.Host = tt.host
-			resp, err := client.Do(req)
+
+			var resp *http.Response
+			resp, err = client.Do(req)
 
 			require.NoError(t, err)
 			defer func() {

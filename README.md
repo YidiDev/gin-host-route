@@ -1,6 +1,6 @@
 # Host Route Library
 
-A high-performance Gin middleware library for routing based on the host.
+A high-performance Gin middleware library for routing based on the host. This library facilitates the configuration of different routes and behaviors for distinct hostnames, enhancing the ability to host multi-tenant applications on a single server.
 
 ## Installation
 
@@ -20,58 +20,77 @@ Below is an example of how to utilize the library to define different routes bas
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/YidiDev/gin-host-route"
-	"log"
-	"net/http"
-	"os"
+   "github.com/YidiDev/gin-host-route"
+   "github.com/gin-gonic/gin"
+   "log"
+   "net/http"
+   "os"
 )
 
+// defineHost1Routes sets up the routes specific to host1.com.
 func defineHost1Routes(rg *gin.RouterGroup) {
-	rg.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hello from host1")
-	})
-	rg.GET("/hi", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hi from host1")
-	})
+   // Route to handle GET request to the root URL of host1, returns a greeting message.
+   rg.GET("/", func(c *gin.Context) {
+      c.String(http.StatusOK, "Hello from host1")
+   })
+   // Route to handle GET request to /hi URL of host1, returns a different greeting message.
+   rg.GET("/hi", func(c *gin.Context) {
+      c.String(http.StatusOK, "Hi from host1")
+   })
 }
 
+// defineHost2Routes sets up the routes specific to host2.com.
 func defineHost2Routes(rg *gin.RouterGroup) {
-	rg.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hello from host2")
-	})
-	rg.GET("/hi", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hi from host2")
-	})
+   // Route to handle GET request to the root URL of host2, returns a greeting message.
+   rg.GET("/", func(c *gin.Context) {
+      c.String(http.StatusOK, "Hello from host2")
+   })
+   // Route to handle GET request to /hi URL of host2, includes log statement and returns a greeting message.
+   rg.GET("/hi", func(c *gin.Context) {
+      log.Println("Important stuff")
+      c.String(http.StatusOK, "Hi from host2")
+   })
 }
 
+// init function sets up logging output to standard output.
 func init() {
-	log.SetOutput(os.Stdout)
+   log.SetOutput(os.Stdout)
 }
 
+// noRouteHandler defines behavior for unspecified routes, returning a not-found message.
+func noRouteHandler(c *gin.Context) {
+   c.String(http.StatusNotFound, "No known route")
+}
+
+// noRouteSpecifier applies a no-route handler for the Gin Engine.
+func noRouteSpecifier(_ string, r *gin.Engine) error {
+   r.NoRoute(noRouteHandler)
+   return nil
+}
+
+// main function initializes the Gin engine and sets up host-based routing.
 func main() {
-	r := gin.Default()
+   r := gin.Default() // Create a new Gin Engine instance with default middleware.
 
-	// Define host-specific configurations
-	hostConfigs := []hostroute.HostConfig{
-		{Host: "host1.com", Prefix: "1", RouterFactory: defineHost1Routes},
-		{Host: "host2.com", Prefix: "2", RouterFactory: defineHost2Routes},
-	}
+   // Define host-specific configurations using HostConfig structs.
+   hostConfigs := []hostroute.HostConfig{
+      {Host: "host1.com", Prefix: "1", RouterFactory: defineHost1Routes},
+      {Host: "host2.com", Prefix: "2", RouterFactory: defineHost2Routes},
+   }
 
-	// Generic hosts are hosts that will use the primary router without special sub-routes
-	genericHosts := []string{"host3.com", "host4.com"}
+   // Define generic hosts to use the primary router without specialized sub-routes.
+   genericHosts := []string{"host3.com", "host4.com"}
 
-	// Setup host-based routes
-	hostroute.SetupHostBasedRoutes(r, hostConfigs, genericHosts, true)
+   // Set up host-based routes and handle any setup errors.
+   err := hostroute.SetupHostBasedRoutes(r, hostConfigs, genericHosts, true, noRouteSpecifier)
+   if err != nil {
+      log.Fatal(err) // Log fatal error if setup fails.
+   }
 
-	// Define handler for unmatched routes
-	r.NoRoute(func(c *gin.Context) {
-		c.String(http.StatusNotFound, "No known route")
-	})
-
-	// Start the server
-	r.Run(":8080")
+   // Start the server on port 8080.
+   r.Run(":8080")
 }
+
 ```
 
 ## Configuration Options
@@ -93,63 +112,12 @@ The `secureAgainstUnknownHosts` boolean flag controls how the middleware handles
 - `true`: Requests from unknown hosts will receive a 404 Not Found Response. This is useful for securing your application against unexpected or unauthorized hosts.
 - `false`: Requests from unknown hosts will be passed through the primary router. This is useful if you want to catch and handle such requests manually.
 
-### Route Configuration Example
+### Additional Host Config
+This param is optional and allows for unlimited inputs. Each input should be a `func(*echo.Group) error`. This is meant for specifying functions that `SetupHostBasedRoutes` should run on every host group after creating it. Common use cases of this are:
+- Configuring a `NoRoute` Handler.
+- Configuring Host Specific Middleware. This can be done in the `HostConfig` in the `RouterFactory`. Alternatively, it could be done here. This may be useful if you want to centralize a lot of the host-specific middleware.
 
-```go
-package main
-
-import (
-	"github.com/gin-gonic/gin"
-	"github.com/YidiDev/gin-host-route"
-	"log"
-	"net/http"
-	"os"
-)
-
-func defineHost1Routes(rg *gin.RouterGroup) {
-	rg.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hello from host1")
-	})
-	rg.GET("/hi", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hi from host1")
-	})
-}
-
-func defineHost2Routes(rg *gin.RouterGroup) {
-	rg.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hello from host2")
-	})
-	rg.GET("/hi", func(c *gin.Context) {
-		log.Println("Important stuff")
-		c.String(http.StatusOK, "Hi from host2")
-	})
-}
-
-func init() {
-	log.SetOutput(os.Stdout)
-}
-
-func main() {
-	r := gin.Default()
-
-	hostConfigs := []hostroute.HostConfig{
-		{Host: "host1.com", Prefix: "1", RouterFactory: defineHost1Routes},
-		{Host: "host2.com", Prefix: "2", RouterFactory: defineHost2Routes},
-	}
-
-	genericHosts := []string{"host3.com", "host4.com"}
-
-	hostroute.SetupHostBasedRoutes(r, hostConfigs, genericHosts, true)
-
-	r.NoRoute(func(c *gin.Context) {
-		c.String(http.StatusNotFound, "No known route")
-	})
-
-	r.Run(":8080")
-}
-```
-
-### Handling Different Hosts
+## Handling Different Hosts
 
 1. **Host-specific Routes**:
    Routes are defined uniquely for each host using a specific `RouterFactory`. The `HostConfig` struct includes the hostname, path prefix, and a function to define routes for that host.
