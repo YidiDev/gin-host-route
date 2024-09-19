@@ -88,7 +88,6 @@ func TestHostBasedRouting(t *testing.T) {
 			resp, err := client.Do(req)
 
 			require.NoError(t, err)
-			defer resp.Body.Close()
 			defer func() {
 				err = resp.Body.Close()
 				require.NoError(t, err)
@@ -161,7 +160,6 @@ func TestHostBasedRoutingWithoutSecureAgainstUnknownHosts(t *testing.T) {
 			resp, err := client.Do(req)
 
 			require.NoError(t, err)
-			defer resp.Body.Close()
 			defer func() {
 				err = resp.Body.Close()
 				require.NoError(t, err)
