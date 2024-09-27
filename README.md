@@ -3,7 +3,7 @@
 A high-performance Gin middleware library for routing based on the host. This library facilitates the configuration of different routes and behaviors for distinct hostnames, enhancing the ability to host multi-tenant applications on a single server.
 
 [![go report card](https://goreportcard.com/badge/github.com/YidiDev/gin-host-route "go report card")](https://goreportcard.com/report/github.com/YidiDev/gin-host-route)
-[![test status](https://github.com/YidiDev/gin-host-route/workflows/tests/badge.svg?branch=main "test status")](https://github.com/YidiDev/gin-host-route/actions)
+[![Go](https://github.com/YidiDev/gin-host-route/actions/workflows/tests.yml/badge.svg)](https://github.com/YidiDev/gin-host-route/actions/workflows/tests.yml)
 [![MIT license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 [![Go.Dev reference](https://img.shields.io/badge/go.dev-reference-blue?logo=go&logoColor=white)](https://pkg.go.dev/github.com/YidiDev/gin-host-route?tab=doc)
 
