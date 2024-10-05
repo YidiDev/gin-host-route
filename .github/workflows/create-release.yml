@@ -7,8 +7,6 @@ on:
 
 permissions:
   contents: write
-  issues: read
-  pull-requests: read
 
 jobs:
   release:
@@ -19,24 +17,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up GitHub Actions settings
-        run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
-
-      - name: Generate Release Notes for Tag
+      - name: Create Release from Draft
+        id: create_release
         uses: release-drafter/release-drafter@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONFIG_FILENAME: .github/release-drafter.yml # Ensure correct path to configuration
 
-      - name: Create Release
-        id: create_release
+      - name: Publish Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
           release_name: "Release ${{ github.ref_name }}"
-          body: ${{ steps.generate_release_notes.outputs.draft-body }}
+          body: |
+            Fetching drafted notes...
           draft: false
           prerelease: false
