@@ -1,5 +1,5 @@
 name-template: 'Release ${{ version }}'
-tag-template: ${{ version }}
+tag-template: '${{ version }}'
 categories:
   - title: 'New Features'
     label: 'feature'
@@ -12,5 +12,11 @@ categories:
   - title: 'Refactorings'
     label: 'refactor'
 change-template: '- [PR #${{ number }}] ${{ title }} (thanks to @${{ author }})'
-version-resolver:
-  - extract-from: '^v(\d+\.\d+\.\d+)$'
+template: |
+  Changes in this release:
+  $CHANGES
+no-changes-template: '* No changes'
+
+no-contributors-template: No contributors
+
+category-template: '## $TITLE'
