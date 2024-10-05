@@ -2,7 +2,7 @@ name-template: 'Release ${{ version }}'
 tag-template: '${{ version }}'
 categories:
   - title: 'Uncategorized'
-    label: ''
+    labels: ['misc']
   - title: 'New Features'
     labels: ['feature']
   - title: 'Bug Fixes'
