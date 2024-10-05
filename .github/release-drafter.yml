@@ -1,0 +1,16 @@
+name-template: 'Release ${{ version }}'
+tag-template: ${{ version }}
+categories:
+  - title: 'New Features'
+    label: 'feature'
+  - title: 'Bug Fixes'
+    label: 'bug'
+  - title: 'Documentation'
+    label: 'documentation'
+  - title: 'Performance Improvements'
+    label: 'performance'
+  - title: 'Refactorings'
+    label: 'refactor'
+change-template: '- [PR #${{ number }}] ${{ title }} (thanks to @${{ author }})'
+version-resolver:
+  - extract-from: '^v(\d+\.\d+\.\d+)$'
