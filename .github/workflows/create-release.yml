@@ -7,31 +7,33 @@ on:
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
-  release:
-    name: Release
+  create_release:
+    name: Create Release
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create Release from Draft
-        id: create_release
+      - name: Generate Release Notes
+        id: generate_release_notes
         uses: release-drafter/release-drafter@v6
+        with:
+          config-name: 'release-drafter.yml'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CONFIG_FILENAME: .github/release-drafter.yml # Ensure correct path to configuration
 
-      - name: Publish Release
+      - name: Create Release
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
           release_name: "Release ${{ github.ref_name }}"
-          body: |
-            Fetching drafted notes...
+          body: ${{ steps.generate_release_notes.outputs.draft-body }}
           draft: false
           prerelease: false
