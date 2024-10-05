@@ -2,21 +2,21 @@ name-template: 'Release ${{ version }}'
 tag-template: '${{ version }}'
 categories:
   - title: 'New Features'
-    label: 'feature'
+    labels: ['feature']
   - title: 'Bug Fixes'
-    label: 'bug'
+    labels: ['bug']
   - title: 'Documentation'
-    label: 'documentation'
+    labels: ['documentation']
   - title: 'Performance Improvements'
-    label: 'performance'
+    labels: ['performance']
   - title: 'Refactorings'
-    label: 'refactor'
+    labels: ['refactor']
+
 change-template: '- [PR #${{ number }}] ${{ title }} (thanks to @${{ author }})'
 template: |
-  Changes in this release:
+  ## Changes in this Release
   $CHANGES
+
 no-changes-template: '* No changes'
 
-no-contributors-template: No contributors
-
-category-template: '## $TITLE'
+category-template: '### $TITLE'
