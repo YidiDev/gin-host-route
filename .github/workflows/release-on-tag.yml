@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+  issues: read
+  pull-requests: read
+
 jobs:
   release:
     name: Release
