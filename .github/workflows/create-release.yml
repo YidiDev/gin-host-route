@@ -18,22 +18,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate Release Notes
+      - name: Generate Release Notes and Publish
         id: generate_release_notes
         uses: release-drafter/release-drafter@v6
         with:
           config-name: 'release-drafter.yml'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: "Release ${{ github.ref_name }}"
-          body: ${{ steps.generate_release_notes.outputs.draft-body }}
-          draft: false
+          name: "Release ${{ github.ref_name }}"
+          tag: ${{ github.ref_name }}
+          publish: true
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
