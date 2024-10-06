@@ -6,20 +6,20 @@ on:
       - main
 
 permissions:
-  contents: write
-  issues: read
-  pull-requests: read
+  contents: read
 
 jobs:
   update_draft_release:
+    permissions:
+      contents: write
+      pull-requests: write
     name: Update Draft Release
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Auto-generate Draft Release Notes
         uses: release-drafter/release-drafter@v6
+        with:
+          config-name: 'release-drafter.yml'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
