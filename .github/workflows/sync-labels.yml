@@ -16,7 +16,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up GitHub CLI
+        uses: actions/setup-node@v4
+        with:
+          node-version: '16'
+
+      - name: Install GitHub CLI
+        run: sudo apt-get install -y gh
+
       - name: Configure repository labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "::group::Reading labels JSON file"
           labels=$(cat .github/labels.json)
@@ -30,7 +40,5 @@ jobs:
           
             echo "Updating label: $name with color #$color and description '$description'"
           
-            # Update the labels using the create-or-update-label action
             gh label create "$name" --color "$color" --description "$description" || gh label edit "$name" --color "$color" --description "$description"
-          
           done
