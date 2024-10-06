@@ -48,6 +48,7 @@ Desktop.ini
 /usage.statistics.xml
 /gradle.xml
 /jarRepositories.xml
+
 # Rope project settings
 .settings/
 /project/
